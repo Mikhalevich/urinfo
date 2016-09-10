@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 )
 
 type UriParams struct {
@@ -15,15 +16,24 @@ type UriParams struct {
 }
 
 func parseArguments() (*UriParams, error) {
-	url := flag.String("url", "http://localhost:8080", "requesting url")
+	urlString := flag.String("url", "http://localhost:8080", "requesting url")
 	isGet := flag.Bool("get", false, "get method")
 	isPost := flag.Bool("post", false, "post method")
 	isHead := flag.Bool("head", false, "head method")
 
 	flag.Parse()
 
-	if len(*url) <= 0 {
+	if len(*urlString) <= 0 {
 		return nil, errors.New("Plese specify url")
+	}
+
+	uri, err := url.Parse(*urlString)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(uri.Scheme) <= 0 {
+		*urlString = "http://" + *urlString
 	}
 
 	var method string
@@ -40,7 +50,7 @@ func parseArguments() (*UriParams, error) {
 	}
 
 	return &UriParams{
-		Url:    *url,
+		Url:    *urlString,
 		Method: method,
 	}, nil
 }
