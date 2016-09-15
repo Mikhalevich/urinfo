@@ -4,7 +4,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -71,12 +70,14 @@ func printResult(response *http.Response, err error) {
 		fmt.Printf("%s => %s\n", key, value)
 	}
 
-	if response.Request.Method == "POST" {
-		fmt.Println("*********** body ****************")
-		fmt.Println(ioutil.ReadAll(response.Body))
-	} else {
-		io.Copy(ioutil.Discard, response.Body)
+	fmt.Println("*********** body ****************")
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		fmt.Println(err)
+		return
 	}
+
+	fmt.Println(string(body))
 }
 
 func Get(url string) {
