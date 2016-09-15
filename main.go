@@ -10,8 +10,9 @@ import (
 )
 
 type UriParams struct {
-	Url    string
-	Method string
+	Url       string
+	Method    string
+	PrintBody bool
 }
 
 func parseArguments() (*UriParams, error) {
@@ -19,6 +20,7 @@ func parseArguments() (*UriParams, error) {
 	isGet := flag.Bool("get", false, "get method")
 	isPost := flag.Bool("post", false, "post method")
 	isHead := flag.Bool("head", false, "head method")
+	noBody := flag.Bool("nobody", false, "print result without body")
 
 	flag.Parse()
 
@@ -35,7 +37,7 @@ func parseArguments() (*UriParams, error) {
 		*urlString = "http://" + *urlString
 	}
 
-	var method string
+	var method string = "GET"
 	if *isGet {
 		method = "GET"
 	} else if *isPost {
@@ -49,12 +51,13 @@ func parseArguments() (*UriParams, error) {
 	}
 
 	return &UriParams{
-		Url:    *urlString,
-		Method: method,
+		Url:       *urlString,
+		Method:    method,
+		PrintBody: !*noBody,
 	}, nil
 }
 
-func printResult(response *http.Response, err error) {
+func printResult(params *UriParams, response *http.Response, err error) {
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -70,19 +73,16 @@ func printResult(response *http.Response, err error) {
 		fmt.Printf("%s => %s\n", key, value)
 	}
 
-	fmt.Println("*********** body ****************")
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		fmt.Println(err)
-		return
+	if params.PrintBody {
+		fmt.Println("*********** body ****************")
+		body, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		fmt.Println(string(body))
 	}
-
-	fmt.Println(string(body))
-}
-
-func Get(url string) {
-	response, err := http.Get(url)
-	printResult(response, err)
 }
 
 func doRequest(params *UriParams) {
@@ -95,7 +95,7 @@ func doRequest(params *UriParams) {
 	client := &http.Client{}
 
 	response, err := client.Do(request)
-	printResult(response, err)
+	printResult(params, response, err)
 }
 
 func main() {
