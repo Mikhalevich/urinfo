@@ -46,10 +46,6 @@ func parseArguments() (*UriParams, error) {
 		method = "HEAD"
 	}
 
-	if len(method) <= 0 {
-		return nil, errors.New("Invalid http method")
-	}
-
 	return &UriParams{
 		Url:       *urlString,
 		Method:    method,
