@@ -54,9 +54,16 @@ func parseArguments() (*UriParams, error) {
 	}, nil
 }
 
-func print(description string, status string, headers *http.Header, body *io.ReadCloser) {
+func print(description string, status string, method string, headers *http.Header, body *io.ReadCloser) {
 	fmt.Println(description)
-	fmt.Printf("Status = %s\n", status)
+
+	if len(status) > 0 {
+		fmt.Printf("Status = %s\n", status)
+	}
+
+	if len(method) > 0 {
+		fmt.Printf("Method = %s\n", method)
+	}
 
 	fmt.Println("HEADERS:")
 	for key, value := range *headers {
@@ -75,6 +82,12 @@ func print(description string, status string, headers *http.Header, body *io.Rea
 	}
 }
 
+func doRedirect(request *http.Request, via []*http.Request) error {
+	print(">>>>>>>>>>>>>>>>>>>>>>>> redirect", "", request.Method, &request.Header, nil)
+
+	return nil
+}
+
 func doRequest(params *UriParams) {
 	request, err := http.NewRequest(params.Method, params.Url, nil)
 	if err != nil {
@@ -82,7 +95,11 @@ func doRequest(params *UriParams) {
 		return
 	}
 
-	client := &http.Client{}
+	print(">>>>>>>>>>>>>>>>>>>>>>>> request", "", request.Method, &request.Header, nil)
+
+	client := &http.Client{
+		CheckRedirect: doRedirect,
+	}
 
 	response, err := client.Do(request)
 	if err != nil {
@@ -91,7 +108,12 @@ func doRequest(params *UriParams) {
 	}
 	defer response.Body.Close()
 
-	print("<<<<<<<<<<<<<<<< result", response.Status, &response.Header, &response.Body)
+	var body *io.ReadCloser = nil
+	if params.PrintBody {
+		body = &response.Body
+	}
+
+	print("<<<<<<<<<<<<<<<<<<<<<<<< result", response.Status, "", &response.Header, body)
 }
 
 func main() {
