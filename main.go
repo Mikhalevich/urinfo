@@ -53,12 +53,7 @@ func parseArguments() (*UriParams, error) {
 	}, nil
 }
 
-func printResult(params *UriParams, response *http.Response, err error) {
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
+func printResult(params *UriParams, response *http.Response) {
 	defer response.Body.Close()
 
 	fmt.Printf("Status = %s\n", response.Status)
@@ -91,7 +86,12 @@ func doRequest(params *UriParams) {
 	client := &http.Client{}
 
 	response, err := client.Do(request)
-	printResult(params, response, err)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	printResult(params, response)
 }
 
 func main() {
