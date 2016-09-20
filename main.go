@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -53,20 +54,18 @@ func parseArguments() (*UriParams, error) {
 	}, nil
 }
 
-func printResult(params *UriParams, response *http.Response) {
-	defer response.Body.Close()
+func print(description string, status string, headers *http.Header, body *io.ReadCloser) {
+	fmt.Println(description)
+	fmt.Printf("Status = %s\n", status)
 
-	fmt.Printf("Status = %s\n", response.Status)
-	fmt.Printf("Content-Lenght = %d\n", response.ContentLength)
-
-	fmt.Println("*********** headers *************")
-	for key, value := range response.Header {
+	fmt.Println("HEADERS:")
+	for key, value := range *headers {
 		fmt.Printf("%s => %s\n", key, value)
 	}
 
-	if params.PrintBody {
-		fmt.Println("*********** body ****************")
-		body, err := ioutil.ReadAll(response.Body)
+	if body != nil {
+		fmt.Println("BODY:")
+		body, err := ioutil.ReadAll(*body)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -90,8 +89,9 @@ func doRequest(params *UriParams) {
 		fmt.Println(err)
 		return
 	}
+	defer response.Body.Close()
 
-	printResult(params, response)
+	print("<<<<<<<<<<<<<<<< result", response.Status, &response.Header, &response.Body)
 }
 
 func main() {
