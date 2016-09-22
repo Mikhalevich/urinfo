@@ -83,7 +83,7 @@ func print(description string, status string, method string, headers *http.Heade
 }
 
 func doRedirect(request *http.Request, via []*http.Request) error {
-	print(">>>>>>>>>>>>>>>>>>>>>>>> redirect", "", request.Method, &request.Header, nil)
+	print("<<<<<<<<<<<<<<<<<<<<<<<< redirect", request.Response.Status, "", &request.Response.Header, nil)
 
 	return nil
 }
