@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 type UriParams struct {
@@ -15,6 +16,11 @@ type UriParams struct {
 	Method    string
 	PrintBody bool
 }
+
+var (
+	StartTime    time.Time
+	PreviousTime time.Time
+)
 
 func parseArguments() (*UriParams, error) {
 	urlString := flag.String("url", "http://localhost:8080", "requesting url")
@@ -54,8 +60,8 @@ func parseArguments() (*UriParams, error) {
 	}, nil
 }
 
-func print(description string, status string, method string, headers *http.Header, body *io.ReadCloser) {
-	fmt.Println(description)
+func print(description string, delta time.Duration, total time.Duration, status string, method string, headers *http.Header, body *io.ReadCloser) {
+	fmt.Printf("%s delta = %s total = %s\n", description, delta, total)
 
 	if len(status) > 0 {
 		fmt.Printf("Status = %s\n", status)
@@ -83,7 +89,9 @@ func print(description string, status string, method string, headers *http.Heade
 }
 
 func doRedirect(request *http.Request, via []*http.Request) error {
-	print("<<<<<<<<<<<<<<<<<<<<<<<< redirect", request.Response.Status, "", &request.Response.Header, nil)
+	currentTime := time.Now()
+	print("<<<<<<<<<<<<<<<<<<<<<<<< redirect", currentTime.Sub(PreviousTime), currentTime.Sub(StartTime), request.Response.Status, "", &request.Response.Header, nil)
+	PreviousTime = currentTime
 
 	return nil
 }
@@ -95,11 +103,12 @@ func doRequest(params *UriParams) {
 		return
 	}
 
-	print(">>>>>>>>>>>>>>>>>>>>>>>> request", "", request.Method, &request.Header, nil)
-
 	client := &http.Client{
 		CheckRedirect: doRedirect,
 	}
+
+	StartTime = time.Now()
+	PreviousTime = StartTime
 
 	response, err := client.Do(request)
 	if err != nil {
@@ -113,7 +122,8 @@ func doRequest(params *UriParams) {
 		body = &response.Body
 	}
 
-	print("<<<<<<<<<<<<<<<<<<<<<<<< result", response.Status, "", &response.Header, body)
+	currentTime := time.Now()
+	print("<<<<<<<<<<<<<<<<<<<<<<<< result", currentTime.Sub(PreviousTime), currentTime.Sub(StartTime), response.Status, "", &response.Header, body)
 }
 
 func main() {
