@@ -24,6 +24,7 @@ var (
 
 func parseArguments() (*UriParams, error) {
 	urlString := flag.String("url", "http://localhost:8080", "requesting url")
+	customMethod := flag.String("method", "", "custom method")
 	isGet := flag.Bool("get", false, "get method")
 	isPost := flag.Bool("post", false, "post method")
 	isHead := flag.Bool("head", false, "head method")
@@ -51,6 +52,8 @@ func parseArguments() (*UriParams, error) {
 		method = "POST"
 	} else if *isHead {
 		method = "HEAD"
+	} else if *customMethod != "" {
+		method = *customMethod
 	}
 
 	return &UriParams{
