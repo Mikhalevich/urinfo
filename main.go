@@ -9,12 +9,15 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/Mikhalevich/downloader"
 )
 
 type UriParams struct {
 	Url       string
 	Method    string
 	PrintBody bool
+	Download  bool
 }
 
 var (
@@ -29,6 +32,7 @@ func parseArguments() (*UriParams, error) {
 	isPost := flag.Bool("post", false, "post method")
 	isHead := flag.Bool("head", false, "head method")
 	noBody := flag.Bool("nobody", false, "print result without body")
+	download := flag.Bool("download", false, "just download the resource")
 
 	flag.Parse()
 
@@ -60,6 +64,7 @@ func parseArguments() (*UriParams, error) {
 		Url:       *urlString,
 		Method:    method,
 		PrintBody: !*noBody,
+		Download:  *download,
 	}, nil
 }
 
@@ -129,6 +134,20 @@ func doRequest(params *UriParams) {
 	print("<<<<<<<<<<<<<<<<<<<<<<<< result", currentTime.Sub(PreviousTime), currentTime.Sub(StartTime), response.Status, "", &response.Header, body)
 }
 
+func doDownload(params *UriParams) {
+	startTime := time.Now()
+
+	task := downloader.NewChunkedTask()
+	task.Method = params.Method
+
+	if err := task.Download(params.Url); err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Printf("Downloaded sucessfully, time elapsed: %s\n", time.Now().Sub(startTime))
+}
+
 func main() {
 	uriParams, err := parseArguments()
 	if err != nil {
@@ -136,5 +155,9 @@ func main() {
 		return
 	}
 
-	doRequest(uriParams)
+	if uriParams.Download {
+		doDownload(uriParams)
+	} else {
+		doRequest(uriParams)
+	}
 }
