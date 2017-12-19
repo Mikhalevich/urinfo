@@ -22,8 +22,25 @@ var (
 	PreviousTime time.Time
 )
 
+func getUrl() (string, error) {
+	if flag.NArg() <= 0 {
+		return "", errors.New("No url specified")
+	}
+
+	urlString := flag.Arg(0)
+	uri, err := url.Parse(urlString)
+	if err != nil {
+		return "", err
+	}
+
+	if uri.Scheme == "" {
+		urlString = "http://" + urlString
+	}
+
+	return urlString, nil
+}
+
 func parseArguments() (*UriParams, error) {
-	urlString := flag.String("url", "http://localhost:8080", "requesting url")
 	customMethod := flag.String("method", "", "custom method")
 	isGet := flag.Bool("get", false, "get method")
 	isPost := flag.Bool("post", false, "post method")
@@ -32,17 +49,9 @@ func parseArguments() (*UriParams, error) {
 
 	flag.Parse()
 
-	if len(*urlString) <= 0 {
-		return nil, errors.New("Plese specify url")
-	}
-
-	uri, err := url.Parse(*urlString)
+	urlString, err := getUrl()
 	if err != nil {
 		return nil, err
-	}
-
-	if len(uri.Scheme) <= 0 {
-		*urlString = "http://" + *urlString
 	}
 
 	var method string = "GET"
@@ -57,7 +66,7 @@ func parseArguments() (*UriParams, error) {
 	}
 
 	return &UriParams{
-		Url:       *urlString,
+		Url:       urlString,
 		Method:    method,
 		PrintBody: !*noBody,
 	}, nil
