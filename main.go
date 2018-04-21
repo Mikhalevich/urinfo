@@ -17,6 +17,8 @@ type UriParams struct {
 	PrintBody bool
 }
 
+type RedirectFunc func(request *http.Request, via []*http.Request) error
+
 var (
 	StartTime    time.Time
 	PreviousTime time.Time
@@ -100,12 +102,19 @@ func print(description string, delta time.Duration, total time.Duration, status 
 	}
 }
 
-func doRedirect(request *http.Request, via []*http.Request) error {
-	currentTime := time.Now()
-	print("<<<<<<<<<<<<<<<<<<<<<<<< redirect", currentTime.Sub(PreviousTime), currentTime.Sub(StartTime), request.Response.Status, "", &request.Response.Header, nil)
-	PreviousTime = currentTime
+func doRedirect(printBody bool) RedirectFunc {
+	return func(request *http.Request, via []*http.Request) error {
+		var body *io.ReadCloser = nil
+		if printBody {
+			body = &request.Response.Body
+		}
 
-	return nil
+		currentTime := time.Now()
+		print("<<<<<<<<<<<<<<<<<<<<<<<< redirect", currentTime.Sub(PreviousTime), currentTime.Sub(StartTime), request.Response.Status, "", &request.Response.Header, body)
+		PreviousTime = currentTime
+
+		return nil
+	}
 }
 
 func doRequest(params *UriParams) {
@@ -116,7 +125,7 @@ func doRequest(params *UriParams) {
 	}
 
 	client := &http.Client{
-		CheckRedirect: doRedirect,
+		CheckRedirect: doRedirect(params.PrintBody),
 	}
 
 	StartTime = time.Now()
