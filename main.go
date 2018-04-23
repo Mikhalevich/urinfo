@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"time"
@@ -17,12 +16,9 @@ type UriParams struct {
 	PrintBody bool
 }
 
-type RedirectFunc func(request *http.Request, via []*http.Request) error
-
-var (
-	StartTime    time.Time
-	PreviousTime time.Time
-)
+type Printer interface {
+	Print(description string, delta time.Duration, total time.Duration, status string, headers *http.Header, body *io.ReadCloser)
+}
 
 func getUrl() (string, error) {
 	if flag.NArg() <= 0 {
@@ -74,79 +70,6 @@ func parseArguments() (*UriParams, error) {
 	}, nil
 }
 
-func print(description string, delta time.Duration, total time.Duration, status string, method string, headers *http.Header, body *io.ReadCloser) {
-	fmt.Printf("%s delta = %s total = %s\n", description, delta, total)
-
-	if len(status) > 0 {
-		fmt.Printf("Status = %s\n", status)
-	}
-
-	if len(method) > 0 {
-		fmt.Printf("Method = %s\n", method)
-	}
-
-	fmt.Println("HEADERS:")
-	for key, value := range *headers {
-		fmt.Printf("%s => %s\n", key, value)
-	}
-
-	if body != nil {
-		fmt.Println("BODY:")
-		body, err := ioutil.ReadAll(*body)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		fmt.Println(string(body))
-	}
-}
-
-func doRedirect(printBody bool) RedirectFunc {
-	return func(request *http.Request, via []*http.Request) error {
-		var body *io.ReadCloser = nil
-		if printBody {
-			body = &request.Response.Body
-		}
-
-		currentTime := time.Now()
-		print("<<<<<<<<<<<<<<<<<<<<<<<< redirect", currentTime.Sub(PreviousTime), currentTime.Sub(StartTime), request.Response.Status, "", &request.Response.Header, body)
-		PreviousTime = currentTime
-
-		return nil
-	}
-}
-
-func doRequest(params *UriParams) {
-	request, err := http.NewRequest(params.Method, params.Url, nil)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	client := &http.Client{
-		CheckRedirect: doRedirect(params.PrintBody),
-	}
-
-	StartTime = time.Now()
-	PreviousTime = StartTime
-
-	response, err := client.Do(request)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	defer response.Body.Close()
-
-	var body *io.ReadCloser = nil
-	if params.PrintBody {
-		body = &response.Body
-	}
-
-	currentTime := time.Now()
-	print("<<<<<<<<<<<<<<<<<<<<<<<< result", currentTime.Sub(PreviousTime), currentTime.Sub(StartTime), response.Status, "", &response.Header, body)
-}
-
 func main() {
 	uriParams, err := parseArguments()
 	if err != nil {
@@ -154,5 +77,10 @@ func main() {
 		return
 	}
 
-	doRequest(uriParams)
+	r := NewRequest(&ConsolePrint{})
+	err = r.Do(uriParams)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 }
