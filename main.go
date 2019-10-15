@@ -10,10 +10,10 @@ import (
 )
 
 type UriParams struct {
-	URL       string
-	Method    string
-	PrintBody bool
-	Verbose   bool
+	URL         string
+	Method      string
+	PrintBody   bool
+	ForceHTTP11 bool
 }
 
 type Printer interface {
@@ -44,7 +44,7 @@ func parseArguments() (*UriParams, error) {
 	isPost := flag.Bool("post", false, "post method")
 	isHead := flag.Bool("head", false, "head method")
 	noBody := flag.Bool("nobody", false, "print result without body")
-	verbose := flag.Bool("v", false, "verbose mode")
+	http11 := flag.Bool("http11", false, "use HTTP/1.1 protocol")
 
 	flag.Parse()
 
@@ -65,10 +65,10 @@ func parseArguments() (*UriParams, error) {
 	}
 
 	return &UriParams{
-		URL:       urlString,
-		Method:    method,
-		PrintBody: !*noBody,
-		Verbose:   *verbose,
+		URL:         urlString,
+		Method:      method,
+		PrintBody:   !*noBody,
+		ForceHTTP11: *http11,
 	}, nil
 }
 
@@ -80,7 +80,7 @@ func main() {
 	}
 
 	r := NewRequest(NewConsolePrint(uriParams.PrintBody))
-	err = r.Do(uriParams.Method, uriParams.URL)
+	err = r.Do(uriParams.Method, uriParams.URL, uriParams.ForceHTTP11)
 	if err != nil {
 		fmt.Println(err)
 		return

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"net/http"
 	"time"
 )
@@ -33,7 +34,7 @@ func (r *Request) doRedirect() RedirectFunc {
 	}
 }
 
-func (r *Request) Do(method, url string) error {
+func (r *Request) Do(method, url string, ForceHTTP11 bool) error {
 	request, err := http.NewRequest(method, url, nil)
 	if err != nil {
 		return err
@@ -41,6 +42,12 @@ func (r *Request) Do(method, url string) error {
 
 	client := &http.Client{
 		CheckRedirect: r.doRedirect(),
+	}
+
+	if ForceHTTP11 {
+		client.Transport = &http.Transport{
+			TLSNextProto: map[string]func(authority string, c *tls.Conn) http.RoundTripper{},
+		}
 	}
 
 	r.StartTime = time.Now()

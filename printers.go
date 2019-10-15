@@ -35,11 +35,14 @@ func (cp *ConsolePrint) Print(description string, delta time.Duration, total tim
 		fmt.Printf("%s => %s\n", key, value)
 	}
 
-	if !cp.PrintBody {
-		return
+	if response.TransferEncoding != nil {
+		fmt.Println("Transfer Encoding:")
+		for _, v := range response.TransferEncoding {
+			fmt.Println(v)
+		}
 	}
 
-	if response.Body != nil {
+	if cp.PrintBody && response.Body != nil {
 		fmt.Println("BODY:")
 		body, err := ioutil.ReadAll(response.Body)
 		if err != nil {
