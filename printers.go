@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -12,29 +11,37 @@ type EmptyPrint struct {
 	// pass
 }
 
-func (cp *EmptyPrint) Print(description string, delta time.Duration, total time.Duration, status string, headers *http.Header, body *io.ReadCloser) {
+func (cp *EmptyPrint) Print(description string, delta time.Duration, total time.Duration, response *http.Response) {
 	// pass
 }
 
 type ConsolePrint struct {
-	// pass
+	PrintBody bool
 }
 
-func (cp *ConsolePrint) Print(description string, delta time.Duration, total time.Duration, status string, headers *http.Header, body *io.ReadCloser) {
+func NewConsolePrint(pb bool) *ConsolePrint {
+	return &ConsolePrint{
+		PrintBody: pb,
+	}
+}
+
+func (cp *ConsolePrint) Print(description string, delta time.Duration, total time.Duration, response *http.Response) {
 	fmt.Printf("<<<<<<<<<<<<<<<<<<<<<<<< %s delta = %s total = %s\n", description, delta, total)
 
-	if status != "" {
-		fmt.Printf("Status = %s\n", status)
-	}
+	fmt.Printf("Status: %s %s\n", response.Proto, response.Status)
 
 	fmt.Println("HEADERS:")
-	for key, value := range *headers {
+	for key, value := range response.Header {
 		fmt.Printf("%s => %s\n", key, value)
 	}
 
-	if body != nil {
+	if !cp.PrintBody {
+		return
+	}
+
+	if response.Body != nil {
 		fmt.Println("BODY:")
-		body, err := ioutil.ReadAll(*body)
+		body, err := ioutil.ReadAll(response.Body)
 		if err != nil {
 			fmt.Println(err)
 			return

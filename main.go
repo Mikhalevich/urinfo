@@ -4,23 +4,23 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"time"
 )
 
 type UriParams struct {
-	Url       string
+	URL       string
 	Method    string
 	PrintBody bool
+	Verbose   bool
 }
 
 type Printer interface {
-	Print(description string, delta time.Duration, total time.Duration, status string, headers *http.Header, body *io.ReadCloser)
+	Print(description string, delta time.Duration, total time.Duration, response *http.Response)
 }
 
-func getUrl() (string, error) {
+func getURL() (string, error) {
 	if flag.NArg() <= 0 {
 		return "", errors.New("No url specified")
 	}
@@ -44,15 +44,16 @@ func parseArguments() (*UriParams, error) {
 	isPost := flag.Bool("post", false, "post method")
 	isHead := flag.Bool("head", false, "head method")
 	noBody := flag.Bool("nobody", false, "print result without body")
+	verbose := flag.Bool("v", false, "verbose mode")
 
 	flag.Parse()
 
-	urlString, err := getUrl()
+	urlString, err := getURL()
 	if err != nil {
 		return nil, err
 	}
 
-	var method string = "GET"
+	method := "GET"
 	if *isGet {
 		method = "GET"
 	} else if *isPost {
@@ -64,9 +65,10 @@ func parseArguments() (*UriParams, error) {
 	}
 
 	return &UriParams{
-		Url:       urlString,
+		URL:       urlString,
 		Method:    method,
 		PrintBody: !*noBody,
+		Verbose:   *verbose,
 	}, nil
 }
 
@@ -77,8 +79,8 @@ func main() {
 		return
 	}
 
-	r := NewRequest(&ConsolePrint{})
-	err = r.Do(uriParams)
+	r := NewRequest(NewConsolePrint(uriParams.PrintBody))
+	err = r.Do(uriParams.Method, uriParams.URL)
 	if err != nil {
 		fmt.Println(err)
 		return

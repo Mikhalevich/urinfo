@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io"
 	"net/http"
 	"time"
 )
@@ -24,29 +23,24 @@ func NewRequest(p Printer) *Request {
 	}
 }
 
-func (r *Request) doRedirect(printBody bool) RedirectFunc {
+func (r *Request) doRedirect() RedirectFunc {
 	return func(request *http.Request, via []*http.Request) error {
-		var body *io.ReadCloser = nil
-		if printBody {
-			body = &request.Response.Body
-		}
-
 		currentTime := time.Now()
-		r.P.Print("redirect", currentTime.Sub(r.PreviousTime), currentTime.Sub(r.StartTime), request.Response.Status, &request.Response.Header, body)
+		r.P.Print("redirect", currentTime.Sub(r.PreviousTime), currentTime.Sub(r.StartTime), request.Response)
 		r.PreviousTime = currentTime
 
 		return nil
 	}
 }
 
-func (r *Request) Do(params *UriParams) error {
-	request, err := http.NewRequest(params.Method, params.Url, nil)
+func (r *Request) Do(method, url string) error {
+	request, err := http.NewRequest(method, url, nil)
 	if err != nil {
 		return err
 	}
 
 	client := &http.Client{
-		CheckRedirect: r.doRedirect(params.PrintBody),
+		CheckRedirect: r.doRedirect(),
 	}
 
 	r.StartTime = time.Now()
@@ -58,13 +52,8 @@ func (r *Request) Do(params *UriParams) error {
 	}
 	defer response.Body.Close()
 
-	var body *io.ReadCloser = nil
-	if params.PrintBody {
-		body = &response.Body
-	}
-
 	currentTime := time.Now()
-	r.P.Print("result", currentTime.Sub(r.PreviousTime), currentTime.Sub(r.StartTime), response.Status, &response.Header, body)
+	r.P.Print("result", currentTime.Sub(r.PreviousTime), currentTime.Sub(r.StartTime), response)
 
 	return nil
 }
