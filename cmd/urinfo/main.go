@@ -1,34 +1,34 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
-	"net/http"
+	"log"
 	"net/url"
-	"time"
+
+	"github.com/Mikhalevich/urinfo/internal/consoleinterceptor"
+	"github.com/Mikhalevich/urinfo/internal/request"
 )
 
-type UriParams struct {
+type Params struct {
 	URL         string
 	Method      string
 	PrintBody   bool
 	ForceHTTP11 bool
 }
 
-type Printer interface {
-	Print(description string, delta time.Duration, total time.Duration, response *http.Response)
-}
-
 func getURL() (string, error) {
 	if flag.NArg() <= 0 {
-		return "", errors.New("No url specified")
+		return "", errors.New("no url specified")
 	}
 
 	urlString := flag.Arg(0)
+
 	uri, err := url.Parse(urlString)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("url parse: %w", err)
 	}
 
 	if uri.Scheme == "" {
@@ -38,7 +38,7 @@ func getURL() (string, error) {
 	return urlString, nil
 }
 
-func parseArguments() (*UriParams, error) {
+func parseArguments() (*Params, error) {
 	customMethod := flag.String("method", "", "custom method")
 	isGet := flag.Bool("get", false, "get method")
 	isPost := flag.Bool("post", false, "post method")
@@ -54,17 +54,19 @@ func parseArguments() (*UriParams, error) {
 	}
 
 	method := "GET"
-	if *isGet {
+
+	switch {
+	case *isGet:
 		method = "GET"
-	} else if *isPost {
+	case *isPost:
 		method = "POST"
-	} else if *isHead {
+	case *isHead:
 		method = "HEAD"
-	} else if *customMethod != "" {
+	case *customMethod != "":
 		method = *customMethod
 	}
 
-	return &UriParams{
+	return &Params{
 		URL:         urlString,
 		Method:      method,
 		PrintBody:   !*noBody,
@@ -73,16 +75,17 @@ func parseArguments() (*UriParams, error) {
 }
 
 func main() {
-	uriParams, err := parseArguments()
+	params, err := parseArguments()
 	if err != nil {
-		fmt.Println(err)
+		log.Fatalln(err)
+
 		return
 	}
 
-	r := NewRequest(NewConsolePrint(uriParams.PrintBody))
-	err = r.Do(uriParams.Method, uriParams.URL, uriParams.ForceHTTP11)
-	if err != nil {
-		fmt.Println(err)
+	r := request.New(consoleinterceptor.New(params.PrintBody))
+	if err := r.Do(context.Background(), params.Method, params.URL, params.ForceHTTP11); err != nil {
+		log.Fatalln(err)
+
 		return
 	}
 }
