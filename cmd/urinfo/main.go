@@ -12,11 +12,19 @@ import (
 	"github.com/Mikhalevich/urinfo/internal/request"
 )
 
+type OutputFormat int
+
+const (
+	PlainFormat OutputFormat = iota + 1
+	JSONFormat
+)
+
 type Params struct {
 	URL         string
 	Method      string
 	PrintBody   bool
 	ForceHTTP11 bool
+	Format      OutputFormat
 }
 
 func getURL() (string, error) {
@@ -45,6 +53,7 @@ func parseArguments() (*Params, error) {
 	isHead := flag.Bool("head", false, "head method")
 	noBody := flag.Bool("nobody", false, "print result without body")
 	http11 := flag.Bool("http11", false, "use HTTP/1.1 protocol")
+	jsonFormat := flag.Bool("json", false, "json output")
 
 	flag.Parse()
 
@@ -66,11 +75,18 @@ func parseArguments() (*Params, error) {
 		method = *customMethod
 	}
 
+	format := PlainFormat
+
+	if *jsonFormat {
+		format = JSONFormat
+	}
+
 	return &Params{
 		URL:         urlString,
 		Method:      method,
 		PrintBody:   !*noBody,
 		ForceHTTP11: *http11,
+		Format:      format,
 	}, nil
 }
 
@@ -82,10 +98,22 @@ func main() {
 		return
 	}
 
-	r := request.New(printer.NewPlainPrinter(params.PrintBody))
+	r := request.New(makePrinter(params.Format, params.PrintBody))
 	if err := r.Do(context.Background(), params.Method, params.URL, params.ForceHTTP11); err != nil {
 		log.Fatalln(err)
 
 		return
 	}
+}
+
+func makePrinter(format OutputFormat, isPrintBody bool) *printer.Printer {
+	switch format {
+	case PlainFormat:
+		return printer.NewPlainPrinter(isPrintBody)
+
+	case JSONFormat:
+		return printer.NewJSONPrinter(isPrintBody)
+	}
+
+	return nil
 }

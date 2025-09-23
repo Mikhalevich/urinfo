@@ -3,8 +3,8 @@ package printer
 import (
 	"fmt"
 	"io"
-	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -39,6 +39,10 @@ func NewPlainPrinter(isPrintBody bool) *Printer {
 	return NewPrinter(isPrintBody, NewPlainFormatter())
 }
 
+func NewJSONPrinter(isPrintBody bool) *Printer {
+	return NewPrinter(isPrintBody, NewJSONFormatter())
+}
+
 func (p *Printer) Before() {
 	p.startTime = time.Now()
 	p.previousTime = p.startTime
@@ -66,7 +70,7 @@ func (p *Printer) print(
 ) {
 	body, err := p.responseBody(rsp)
 	if err != nil {
-		log.Println(err)
+		fmt.Fprintln(os.Stderr, err)
 	}
 
 	output := p.formatter.Format(
@@ -80,7 +84,7 @@ func (p *Printer) print(
 		body,
 	)
 
-	log.Println(output)
+	fmt.Fprintln(os.Stdout, output)
 }
 
 func (p *Printer) responseBody(rsp *http.Response) (string, error) {
