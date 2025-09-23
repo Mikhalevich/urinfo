@@ -1,4 +1,4 @@
-package consoleinterceptor
+package plain
 
 import (
 	"io"
@@ -7,38 +7,38 @@ import (
 	"time"
 )
 
-type ConsoleInterceptor struct {
+type Plain struct {
 	isPrintBody  bool
 	startTime    time.Time
 	previousTime time.Time
 }
 
-func New(isPrintBody bool) *ConsoleInterceptor {
-	return &ConsoleInterceptor{
+func New(isPrintBody bool) *Plain {
+	return &Plain{
 		isPrintBody: isPrintBody,
 	}
 }
 
-func (c *ConsoleInterceptor) Before() {
-	c.startTime = time.Now()
-	c.previousTime = c.startTime
+func (p *Plain) Before() {
+	p.startTime = time.Now()
+	p.previousTime = p.startTime
 }
 
-func (c *ConsoleInterceptor) After(rsp *http.Response) {
+func (p *Plain) After(rsp *http.Response) {
 	now := time.Now()
 
-	c.print("result", now.Sub(c.previousTime), now.Sub(c.startTime), rsp)
+	p.print("result", now.Sub(p.previousTime), now.Sub(p.startTime), rsp)
 }
 
-func (c *ConsoleInterceptor) Redirect(rsp *http.Response) {
+func (p *Plain) Redirect(rsp *http.Response) {
 	now := time.Now()
 
-	c.print("redirect", now.Sub(c.previousTime), now.Sub(c.startTime), rsp)
+	p.print("redirect", now.Sub(p.previousTime), now.Sub(p.startTime), rsp)
 
-	c.previousTime = now
+	p.previousTime = now
 }
 
-func (c *ConsoleInterceptor) print(
+func (p *Plain) print(
 	description string,
 	delta time.Duration,
 	total time.Duration,
@@ -62,7 +62,7 @@ func (c *ConsoleInterceptor) print(
 		}
 	}
 
-	if c.isPrintBody && response.Body != nil {
+	if p.isPrintBody && response.Body != nil {
 		log.Println("BODY:")
 
 		body, err := io.ReadAll(response.Body)
