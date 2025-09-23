@@ -8,7 +8,7 @@ import (
 	"log"
 	"net/url"
 
-	"github.com/Mikhalevich/urinfo/internal/interceptor"
+	"github.com/Mikhalevich/urinfo/internal/interceptor/printer"
 	"github.com/Mikhalevich/urinfo/internal/request"
 )
 
@@ -82,7 +82,7 @@ func main() {
 		return
 	}
 
-	r := request.New(interceptor.NewPlainInterceptor(params.PrintBody))
+	r := request.New(printer.NewPlainPrinter(params.PrintBody))
 	if err := r.Do(context.Background(), params.Method, params.URL, params.ForceHTTP11); err != nil {
 		log.Fatalln(err)
 
