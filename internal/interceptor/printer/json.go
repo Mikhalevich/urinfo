@@ -2,17 +2,29 @@ package printer
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
 )
 
+type duration time.Duration
+
+func (d duration) MarshalJSON() ([]byte, error) {
+	b, err := json.Marshal(time.Duration(d).String())
+	if err != nil {
+		return nil, fmt.Errorf("json marshal: %w", err)
+	}
+
+	return b, nil
+}
+
 type metaInfo struct {
-	Description string        `json:"description"`
-	TimeDelta   time.Duration `json:"time_delta"`
-	TimeTotal   time.Duration `json:"time_total"`
-	Proto       string        `json:"proto"`
-	Status      string        `json:"status"`
+	Description string   `json:"description"`
+	TimeDelta   duration `json:"time_delta"`
+	TimeTotal   duration `json:"time_total"`
+	Proto       string   `json:"proto"`
+	Status      string   `json:"status"`
 }
 
 type jsonFormat struct {
@@ -42,8 +54,8 @@ func (j JsonFormatter) Format(
 	output := jsonFormat{
 		MetaInfo: metaInfo{
 			Description: description,
-			TimeDelta:   delta,
-			TimeTotal:   total,
+			TimeDelta:   duration(delta),
+			TimeTotal:   duration(total),
 			Proto:       proto,
 			Status:      status,
 		},
