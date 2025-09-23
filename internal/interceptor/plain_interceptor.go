@@ -1,4 +1,4 @@
-package plain
+package interceptor
 
 import (
 	"io"
@@ -7,30 +7,30 @@ import (
 	"time"
 )
 
-type Plain struct {
+type PlainInterceptor struct {
 	isPrintBody  bool
 	startTime    time.Time
 	previousTime time.Time
 }
 
-func New(isPrintBody bool) *Plain {
-	return &Plain{
+func NewPlainInterceptor(isPrintBody bool) *PlainInterceptor {
+	return &PlainInterceptor{
 		isPrintBody: isPrintBody,
 	}
 }
 
-func (p *Plain) Before() {
+func (p *PlainInterceptor) Before() {
 	p.startTime = time.Now()
 	p.previousTime = p.startTime
 }
 
-func (p *Plain) After(rsp *http.Response) {
+func (p *PlainInterceptor) After(rsp *http.Response) {
 	now := time.Now()
 
 	p.print("result", now.Sub(p.previousTime), now.Sub(p.startTime), rsp)
 }
 
-func (p *Plain) Redirect(rsp *http.Response) {
+func (p *PlainInterceptor) Redirect(rsp *http.Response) {
 	now := time.Now()
 
 	p.print("redirect", now.Sub(p.previousTime), now.Sub(p.startTime), rsp)
@@ -38,7 +38,7 @@ func (p *Plain) Redirect(rsp *http.Response) {
 	p.previousTime = now
 }
 
-func (p *Plain) print(
+func (p *PlainInterceptor) print(
 	description string,
 	delta time.Duration,
 	total time.Duration,
