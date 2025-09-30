@@ -26,11 +26,6 @@ func New(interceptor Interceptor) *Request {
 }
 
 func (r *Request) Do(ctx context.Context, method, url string, forceHTTP11 bool) error {
-	request, err := http.NewRequestWithContext(ctx, method, url, nil)
-	if err != nil {
-		return fmt.Errorf("create new request: %w", err)
-	}
-
 	client := &http.Client{
 		CheckRedirect: r.doRedirect(),
 	}
@@ -41,9 +36,22 @@ func (r *Request) Do(ctx context.Context, method, url string, forceHTTP11 bool) 
 		}
 	}
 
+	return r.doImpl(ctx, method, url, client)
+}
+
+type doer interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
+func (r *Request) doImpl(ctx context.Context, method, url string, doer doer) error {
+	request, err := http.NewRequestWithContext(ctx, method, url, nil)
+	if err != nil {
+		return fmt.Errorf("create new request: %w", err)
+	}
+
 	r.interceptor.Before()
 
-	response, err := client.Do(request)
+	response, err := doer.Do(request)
 	if err != nil {
 		return fmt.Errorf("do http request: %w", err)
 	}
