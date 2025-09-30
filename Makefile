@@ -26,3 +26,6 @@ install-linter:
 
 lint: install-linter
 	$(GOBIN)/$(LINTER_VERSION)/$(LINTER_NAME) run --config .golangci.yml
+
+generate:
+	$(ENV_PATH) go generate ./...
