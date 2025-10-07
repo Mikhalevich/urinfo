@@ -25,12 +25,18 @@ func New(interceptor Interceptor) *Request {
 	}
 }
 
-func (r *Request) Do(ctx context.Context, method, url string, forceHTTP11 bool) error {
+func (r *Request) Do(ctx context.Context, method, url string, opts ...Option) error {
+	var reqOptions options
+
+	for _, opt := range opts {
+		opt(&reqOptions)
+	}
+
 	client := &http.Client{
 		CheckRedirect: r.doRedirect(),
 	}
 
-	if forceHTTP11 {
+	if reqOptions.ForceHTTP11 {
 		client.Transport = &http.Transport{
 			TLSNextProto: map[string]func(authority string, c *tls.Conn) http.RoundTripper{},
 		}

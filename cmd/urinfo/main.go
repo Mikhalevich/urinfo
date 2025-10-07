@@ -99,7 +99,12 @@ func main() {
 	}
 
 	r := request.New(makePrinter(params.Format, params.PrintBody))
-	if err := r.Do(context.Background(), params.Method, params.URL, params.ForceHTTP11); err != nil {
+	if err := r.Do(
+		context.Background(),
+		params.Method,
+		params.URL,
+		request.WithForceHTTP11(params.ForceHTTP11),
+	); err != nil {
 		log.Fatalln(err)
 
 		return
