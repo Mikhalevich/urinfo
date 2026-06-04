@@ -9,6 +9,7 @@ import (
 	"net/url"
 
 	"github.com/Mikhalevich/urinfo/internal/interceptor/printer"
+	"github.com/Mikhalevich/urinfo/internal/interceptor/printer/formatter"
 	"github.com/Mikhalevich/urinfo/internal/request"
 )
 
@@ -114,10 +115,10 @@ func main() {
 func makePrinter(format OutputFormat, isPrintBody bool) *printer.Printer {
 	switch format {
 	case PlainFormat:
-		return printer.NewPlainPrinter(isPrintBody)
+		return printer.NewPrinter(isPrintBody, formatter.NewPlainFormatter())
 
 	case JSONFormat:
-		return printer.NewJSONPrinter(isPrintBody)
+		return printer.NewPrinter(isPrintBody, formatter.NewJSONFormatter())
 	}
 
 	return nil

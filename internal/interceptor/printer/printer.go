@@ -8,24 +8,27 @@ import (
 	"time"
 )
 
+type ResponseData struct {
+	Description      string
+	Delta            time.Duration
+	Total            time.Duration
+	Proto            string
+	Status           string
+	Headers          http.Header
+	TransferEncoding []string
+	Body             string
+}
+
 type Formatter interface {
-	Format(
-		description string,
-		delta time.Duration,
-		total time.Duration,
-		proto string,
-		status string,
-		headers http.Header,
-		transferEncoding []string,
-		body string,
-	) string
+	Format(data ResponseData) string
 }
 
 type Printer struct {
-	isPrintBody  bool
-	formatter    Formatter
-	startTime    time.Time
-	previousTime time.Time
+	isPrintBody   bool
+	formatter     Formatter
+	startTime     time.Time
+	previousTime  time.Time
+	responseSteps []ResponseData
 }
 
 func NewPrinter(isPrintBody bool, formatter Formatter) *Printer {
@@ -35,15 +38,11 @@ func NewPrinter(isPrintBody bool, formatter Formatter) *Printer {
 	}
 }
 
-func NewPlainPrinter(isPrintBody bool) *Printer {
-	return NewPrinter(isPrintBody, NewPlainFormatter())
-}
-
-func NewJSONPrinter(isPrintBody bool) *Printer {
-	return NewPrinter(isPrintBody, NewJSONFormatter())
-}
-
 func (p *Printer) Before() {
+	if p.responseSteps != nil {
+		p.responseSteps = p.responseSteps[0:]
+	}
+
 	p.startTime = time.Now()
 	p.previousTime = p.startTime
 }
@@ -51,18 +50,20 @@ func (p *Printer) Before() {
 func (p *Printer) After(rsp *http.Response) {
 	now := time.Now()
 
-	p.print("result", now.Sub(p.previousTime), now.Sub(p.startTime), rsp)
+	p.addResponseStep("result", now.Sub(p.previousTime), now.Sub(p.startTime), rsp)
+
+	p.printSteps()
 }
 
 func (p *Printer) Redirect(rsp *http.Response) {
 	now := time.Now()
 
-	p.print("redirect", now.Sub(p.previousTime), now.Sub(p.startTime), rsp)
+	p.addResponseStep("redirect", now.Sub(p.previousTime), now.Sub(p.startTime), rsp)
 
 	p.previousTime = now
 }
 
-func (p *Printer) print(
+func (p *Printer) addResponseStep(
 	description string,
 	delta time.Duration,
 	total time.Duration,
@@ -73,18 +74,22 @@ func (p *Printer) print(
 		fmt.Fprintln(os.Stderr, err)
 	}
 
-	output := p.formatter.Format(
-		description,
-		delta,
-		total,
-		rsp.Proto,
-		rsp.Status,
-		rsp.Header,
-		rsp.TransferEncoding,
-		body,
-	)
+	p.responseSteps = append(p.responseSteps, ResponseData{
+		Description:      description,
+		Delta:            delta,
+		Total:            total,
+		Proto:            rsp.Proto,
+		Status:           rsp.Status,
+		Headers:          rsp.Header,
+		TransferEncoding: rsp.TransferEncoding,
+		Body:             body,
+	})
+}
 
-	fmt.Fprintln(os.Stdout, output)
+func (p *Printer) printSteps() {
+	for _, step := range p.responseSteps {
+		fmt.Fprintln(os.Stdout, p.formatter.Format(step))
+	}
 }
 
 func (p *Printer) responseBody(rsp *http.Response) (string, error) {

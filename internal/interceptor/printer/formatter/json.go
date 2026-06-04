@@ -1,4 +1,4 @@
-package printer
+package formatter
 
 import (
 	"encoding/json"
@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/Mikhalevich/urinfo/internal/interceptor/printer"
 )
 
 type duration time.Duration
@@ -41,27 +43,18 @@ func NewJSONFormatter() JsonFormatter {
 	return JsonFormatter{}
 }
 
-func (j JsonFormatter) Format(
-	description string,
-	delta time.Duration,
-	total time.Duration,
-	proto string,
-	status string,
-	headers http.Header,
-	transferEncoding []string,
-	body string,
-) string {
+func (j JsonFormatter) Format(data printer.ResponseData) string {
 	output := jsonFormat{
 		MetaInfo: metaInfo{
-			Description: description,
-			TimeDelta:   duration(delta),
-			TimeTotal:   duration(total),
-			Proto:       proto,
-			Status:      status,
+			Description: data.Description,
+			TimeDelta:   duration(data.Delta),
+			TimeTotal:   duration(data.Total),
+			Proto:       data.Proto,
+			Status:      data.Status,
 		},
-		Headers:          convertHeaders(headers),
-		TransferEncoding: transferEncoding,
-		Body:             body,
+		Headers:          convertHeaders(data.Headers),
+		TransferEncoding: data.TransferEncoding,
+		Body:             data.Body,
 	}
 
 	b, err := json.MarshalIndent(output, "", "\t")
