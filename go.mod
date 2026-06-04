@@ -1,6 +1,6 @@
 module github.com/Mikhalevich/urinfo
 
-go 1.24
+go 1.26
 
 tool go.uber.org/mock/mockgen
 
