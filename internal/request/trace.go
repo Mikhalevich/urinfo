@@ -19,35 +19,35 @@ type Trace struct {
 }
 
 func NewTrace() (*Trace, *httptrace.ClientTrace) {
-	t := Trace{}
+	trace := Trace{}
 
-	return &t, &httptrace.ClientTrace{
+	return &trace, &httptrace.ClientTrace{
 		GetConn: func(hostPort string) {
-			t.GetConn = time.Now()
+			trace.GetConn = time.Now()
 		},
 		GotConn: func(_ httptrace.GotConnInfo) {
-			t.GotConn = time.Now()
+			trace.GotConn = time.Now()
 		},
 		GotFirstResponseByte: func() {
-			t.GotFirstResponseByte = time.Now()
+			trace.GotFirstResponseByte = time.Now()
 		},
 		DNSStart: func(_ httptrace.DNSStartInfo) {
-			t.DNSStart = time.Now()
+			trace.DNSStart = time.Now()
 		},
 		DNSDone: func(_ httptrace.DNSDoneInfo) {
-			t.DNSDone = time.Now()
+			trace.DNSDone = time.Now()
 		},
 		ConnectStart: func(_, _ string) {
-			t.ConnectStart = time.Now()
+			trace.ConnectStart = time.Now()
 		},
 		ConnectDone: func(_, _ string, _ error) {
-			t.ConnectDone = time.Now()
+			trace.ConnectDone = time.Now()
 		},
 		TLSHandshakeStart: func() {
-			t.TLSStart = time.Now()
+			trace.TLSStart = time.Now()
 		},
 		TLSHandshakeDone: func(_ tls.ConnectionState, _ error) {
-			t.TLSDone = time.Now()
+			trace.TLSDone = time.Now()
 		},
 	}
 }
