@@ -25,7 +25,19 @@ func (p PlainFormatter) Format(data printer.ResponseData) string {
 	addLine(fmt.Sprintf("<<<<<<<<<<<<<<<<<<<<<<<< %s delta = %s total = %s",
 		data.Description, data.Delta, data.Total))
 
+	addLine("")
+
+	addLine("TRACING:")
+	addLine(fmt.Sprintf("DNS lookup:        %v", data.Trace.DNSDone.Sub(data.Trace.DNSStart)))
+	addLine(fmt.Sprintf("TCP connect:       %v", data.Trace.ConnectDone.Sub(data.Trace.ConnectStart)))
+	addLine(fmt.Sprintf("TLS handshake:     %v", data.Trace.TLSDone.Sub(data.Trace.TLSStart)))
+	addLine(fmt.Sprintf("Server processing: %v", data.Trace.GotFirstResponseByte.Sub(data.Trace.GotConn)))
+
+	addLine("")
+
 	addLine(fmt.Sprintf("Status: %s %s", data.Proto, data.Status))
+
+	addLine("")
 
 	addLine("HEADERS:")
 
@@ -40,6 +52,8 @@ func (p PlainFormatter) Format(data printer.ResponseData) string {
 			addLine(v)
 		}
 	}
+
+	addLine("")
 
 	if data.Body != "" {
 		addLine("BODY:")
