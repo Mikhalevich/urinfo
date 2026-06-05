@@ -76,7 +76,7 @@ func TestDoImp(t *testing.T) {
 				Do(gomock.Any()).
 				Return(&rsp, nil),
 			interceptor.EXPECT().
-				After(&rsp),
+				After(&rsp, gomock.Any()),
 		)
 
 		err := req.doImpl(ctx, "GET", "some_url", doer)

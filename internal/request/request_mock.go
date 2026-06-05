@@ -41,15 +41,15 @@ func (m *MockInterceptor) EXPECT() *MockInterceptorMockRecorder {
 }
 
 // After mocks base method.
-func (m *MockInterceptor) After(rsp *http.Response) {
+func (m *MockInterceptor) After(rsp *http.Response, trace Trace) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "After", rsp)
+	m.ctrl.Call(m, "After", rsp, trace)
 }
 
 // After indicates an expected call of After.
-func (mr *MockInterceptorMockRecorder) After(rsp any) *gomock.Call {
+func (mr *MockInterceptorMockRecorder) After(rsp, trace any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "After", reflect.TypeOf((*MockInterceptor)(nil).After), rsp)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "After", reflect.TypeOf((*MockInterceptor)(nil).After), rsp, trace)
 }
 
 // Before mocks base method.
@@ -65,15 +65,15 @@ func (mr *MockInterceptorMockRecorder) Before() *gomock.Call {
 }
 
 // Redirect mocks base method.
-func (m *MockInterceptor) Redirect(rsp *http.Response) {
+func (m *MockInterceptor) Redirect(rsp *http.Response, trace Trace) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Redirect", rsp)
+	m.ctrl.Call(m, "Redirect", rsp, trace)
 }
 
 // Redirect indicates an expected call of Redirect.
-func (mr *MockInterceptorMockRecorder) Redirect(rsp any) *gomock.Call {
+func (mr *MockInterceptorMockRecorder) Redirect(rsp, trace any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Redirect", reflect.TypeOf((*MockInterceptor)(nil).Redirect), rsp)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Redirect", reflect.TypeOf((*MockInterceptor)(nil).Redirect), rsp, trace)
 }
 
 // Mockdoer is a mock of doer interface.
