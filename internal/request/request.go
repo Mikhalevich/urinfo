@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptrace"
+	"time"
 )
 
 type Interceptor interface {
@@ -68,6 +69,7 @@ func (r *Request) doImpl(
 	}
 
 	r.interceptor.Before()
+	r.trace.Start = time.Now()
 
 	response, err := doer.Do(request)
 	if err != nil {
@@ -76,6 +78,8 @@ func (r *Request) doImpl(
 
 	defer response.Body.Close()
 
+	r.trace.Done = time.Now()
+
 	r.interceptor.After(response, copyTrace(r.trace))
 
 	return nil
@@ -83,7 +87,11 @@ func (r *Request) doImpl(
 
 func (r *Request) doRedirect() RedirectFunc {
 	return func(request *http.Request, via []*http.Request) error {
+		r.trace.Done = time.Now()
+
 		r.interceptor.Redirect(request.Response, copyTrace(r.trace))
+
+		r.trace.Start = time.Now()
 
 		return nil
 	}

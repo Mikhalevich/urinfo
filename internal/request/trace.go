@@ -7,6 +7,7 @@ import (
 )
 
 type Trace struct {
+	Start                time.Time
 	GetConn              time.Time
 	GotConn              time.Time
 	GotFirstResponseByte time.Time
@@ -16,6 +17,7 @@ type Trace struct {
 	ConnectDone          time.Time
 	TLSStart             time.Time
 	TLSDone              time.Time
+	Done                 time.Time
 }
 
 func NewTrace() (*Trace, *httptrace.ClientTrace) {
