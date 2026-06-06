@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/Mikhalevich/urinfo/internal/request"
+	"github.com/Mikhalevich/urinfo/internal/trace"
 )
 
 type ResponseData struct {
@@ -19,7 +19,7 @@ type ResponseData struct {
 	Headers          http.Header
 	TransferEncoding []string
 	Body             string
-	Trace            request.Trace
+	Trace            trace.Trace
 }
 
 type Formatter interface {
@@ -50,18 +50,18 @@ func (p *Printer) Before() {
 	p.previousTime = p.startTime
 }
 
-func (p *Printer) After(rsp *http.Response, trace request.Trace) {
+func (p *Printer) After(rsp *http.Response, tracing trace.Trace) {
 	now := time.Now()
 
-	p.addResponseStep("result", now.Sub(p.previousTime), now.Sub(p.startTime), rsp, trace)
+	p.addResponseStep("result", now.Sub(p.previousTime), now.Sub(p.startTime), rsp, tracing)
 
 	p.printSteps()
 }
 
-func (p *Printer) Redirect(rsp *http.Response, trace request.Trace) {
+func (p *Printer) Redirect(rsp *http.Response, tracing trace.Trace) {
 	now := time.Now()
 
-	p.addResponseStep("redirect", now.Sub(p.previousTime), now.Sub(p.startTime), rsp, trace)
+	p.addResponseStep("redirect", now.Sub(p.previousTime), now.Sub(p.startTime), rsp, tracing)
 
 	p.previousTime = now
 }
@@ -71,7 +71,7 @@ func (p *Printer) addResponseStep(
 	delta time.Duration,
 	total time.Duration,
 	rsp *http.Response,
-	trace request.Trace,
+	tracing trace.Trace,
 ) {
 	body, err := p.responseBody(rsp)
 	if err != nil {
@@ -87,7 +87,7 @@ func (p *Printer) addResponseStep(
 		Headers:          rsp.Header,
 		TransferEncoding: rsp.TransferEncoding,
 		Body:             body,
-		Trace:            trace,
+		Trace:            tracing,
 	})
 }
 

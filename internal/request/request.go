@@ -7,17 +7,19 @@ import (
 	"net/http"
 	"net/http/httptrace"
 	"time"
+
+	"github.com/Mikhalevich/urinfo/internal/trace"
 )
 
 type Interceptor interface {
 	Before()
-	After(rsp *http.Response, trace Trace)
-	Redirect(rsp *http.Response, trace Trace)
+	After(rsp *http.Response, tracing trace.Trace)
+	Redirect(rsp *http.Response, tracing trace.Trace)
 }
 
 type Request struct {
 	interceptor Interceptor
-	trace       *Trace
+	tracing     *trace.Trace
 }
 
 type RedirectFunc func(request *http.Request, via []*http.Request) error
@@ -46,10 +48,10 @@ func (r *Request) Do(ctx context.Context, method, url string, opts ...Option) er
 	}
 
 	var (
-		trace, clientTrace = NewTrace()
+		tracing, clientTrace = trace.New()
 	)
 
-	r.trace = trace
+	r.tracing = tracing
 
 	return r.doImpl(httptrace.WithClientTrace(ctx, clientTrace), method, url, client)
 }
@@ -69,7 +71,7 @@ func (r *Request) doImpl(
 	}
 
 	r.interceptor.Before()
-	r.trace.Start = time.Now()
+	r.tracing.Start = time.Now()
 
 	response, err := doer.Do(request)
 	if err != nil {
@@ -78,29 +80,29 @@ func (r *Request) doImpl(
 
 	defer response.Body.Close()
 
-	r.trace.Done = time.Now()
+	r.tracing.Done = time.Now()
 
-	r.interceptor.After(response, copyTrace(r.trace))
+	r.interceptor.After(response, copyTrace(r.tracing))
 
 	return nil
 }
 
 func (r *Request) doRedirect() RedirectFunc {
 	return func(request *http.Request, via []*http.Request) error {
-		r.trace.Done = time.Now()
+		r.tracing.Done = time.Now()
 
-		r.interceptor.Redirect(request.Response, copyTrace(r.trace))
+		r.interceptor.Redirect(request.Response, copyTrace(r.tracing))
 
-		r.trace.Start = time.Now()
+		r.tracing.Start = time.Now()
 
 		return nil
 	}
 }
 
-func copyTrace(trace *Trace) Trace {
-	if trace != nil {
-		return *trace
+func copyTrace(tracing *trace.Trace) trace.Trace {
+	if tracing != nil {
+		return *tracing
 	}
 
-	return Trace{}
+	return trace.Trace{}
 }

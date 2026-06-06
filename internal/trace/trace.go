@@ -1,4 +1,4 @@
-package request
+package trace
 
 import (
 	"crypto/tls"
@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// Trace struct contains http trace timings.
 type Trace struct {
 	Start                time.Time
 	GetConn              time.Time
@@ -20,7 +21,8 @@ type Trace struct {
 	Done                 time.Time
 }
 
-func NewTrace() (*Trace, *httptrace.ClientTrace) {
+// New constructor for Trace struct, returns Trace itself and ClientTrace for request context.
+func New() (*Trace, *httptrace.ClientTrace) {
 	trace := Trace{}
 
 	return &trace, &httptrace.ClientTrace{
