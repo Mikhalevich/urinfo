@@ -32,6 +32,8 @@ func (p PlainFormatter) Format(data printer.ResponseData) string {
 	addLine(fmt.Sprintf("TCP connect:       %v", data.Trace.ConnectDone.Sub(data.Trace.ConnectStart)))
 	addLine(fmt.Sprintf("TLS handshake:     %v", data.Trace.TLSDone.Sub(data.Trace.TLSStart)))
 	addLine(fmt.Sprintf("Server processing: %v", data.Trace.GotFirstResponseByte.Sub(data.Trace.GotConn)))
+	addLine(fmt.Sprintf("Content transfer:  %v", data.Trace.Done.Sub(data.Trace.GotFirstResponseByte)))
+	addLine(fmt.Sprintf("Total:             %v", data.Trace.Done.Sub(data.Trace.Start)))
 
 	addLine("")
 

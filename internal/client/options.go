@@ -1,4 +1,4 @@
-package request
+package client
 
 type options struct {
 	ForceHTTP11 bool
