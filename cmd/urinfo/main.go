@@ -8,9 +8,9 @@ import (
 	"log"
 	"net/url"
 
+	"github.com/Mikhalevich/urinfo/internal/client"
 	"github.com/Mikhalevich/urinfo/internal/interceptor/printer"
 	"github.com/Mikhalevich/urinfo/internal/interceptor/printer/formatter"
-	"github.com/Mikhalevich/urinfo/internal/request"
 )
 
 type OutputFormat int
@@ -99,12 +99,12 @@ func main() {
 		return
 	}
 
-	r := request.New(makePrinter(params.Format, params.PrintBody))
-	if err := r.Do(
+	if err := client.Do(
 		context.Background(),
+		makePrinter(params.Format, params.PrintBody),
 		params.Method,
 		params.URL,
-		request.WithForceHTTP11(params.ForceHTTP11),
+		client.WithForceHTTP11(params.ForceHTTP11),
 	); err != nil {
 		log.Fatalln(err)
 
