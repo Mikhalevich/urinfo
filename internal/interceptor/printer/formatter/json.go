@@ -29,8 +29,18 @@ type metaInfo struct {
 	Status      string   `json:"status"`
 }
 
+type tracing struct {
+	DNSLookup        duration `json:"dns_lookup"`
+	TCPConnect       duration `json:"tcp_connect"`
+	TLSHandshake     duration `json:"tls_handshake"`
+	ServerProcessing duration `json:"server_processing"`
+	ContentTransfer  duration `json:"content_transfer"`
+	Total            duration `json:"total"`
+}
+
 type jsonFormat struct {
 	MetaInfo         metaInfo          `json:"meta_info"`
+	Tracing          tracing           `json:"tracing"`
 	Headers          map[string]string `json:"headers"`
 	TransferEncoding []string          `json:"transer_encoding,omitempty"`
 	Body             string            `json:"body,omitempty"`
@@ -51,6 +61,14 @@ func (j JsonFormatter) Format(data printer.ResponseData) string {
 			TimeTotal:   duration(data.Total),
 			Proto:       data.Proto,
 			Status:      data.Status,
+		},
+		Tracing: tracing{
+			DNSLookup:        duration(data.Trace.DNSDone.Sub(data.Trace.DNSStart)),
+			TCPConnect:       duration(data.Trace.ConnectDone.Sub(data.Trace.ConnectStart)),
+			TLSHandshake:     duration(data.Trace.TLSDone.Sub(data.Trace.TLSStart)),
+			ServerProcessing: duration(data.Trace.GotFirstResponseByte.Sub(data.Trace.GotConn)),
+			ContentTransfer:  duration(data.Trace.Done.Sub(data.Trace.GotFirstResponseByte)),
+			Total:            duration(data.Trace.Done.Sub(data.Trace.Start)),
 		},
 		Headers:          convertHeaders(data.Headers),
 		TransferEncoding: data.TransferEncoding,
